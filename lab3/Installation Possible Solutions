@@ -1,0 +1,363 @@
+# How to Modify MySQL
+
+This message indicates that the `root` user of MySQL is authenticated using the `auth_socket` plugin by default instead of a password. The `auth_socket` plugin allows users on the system to log into MySQL with their system username (like "root") without a password, provided the user connects via a UNIX socket.
+
+For some applications and environments, this provides adequate security since only the `root` user on the local system can log in as the `root` user in MySQL. However, if you prefer the traditional password authentication method, you can change it by following these steps:
+
+1. **Login to MySQL**:
+```bash
+sudo mysql -u root
+```
+
+2. **Change the authentication method for `root` with the following command**:
+```sql
+ALTER USER 'root'@'localhost' IDENTIFIED WITH 'mysql_native_password' BY 'your_new_password';
+```
+Replace `your_new_password` with the password you want to set for the MySQL `root` user.
+
+3. **Refresh permissions and exit MySQL**:
+```sql
+FLUSH PRIVILEGES;
+exit;
+```
+
+Now, you should be able to log in to MySQL as the `root` user using the new password you set.
+
+However, note that after doing this, you won't be able to log in to MySQL with `sudo mysql -u root` without a password. Instead, you must use `mysql -u root -p` and then enter the password you set.
+
+
+
+---
+
+
+
+# How to Enable Copy in VirtualBox
+
+```bash
+sudo apt-get install virtualbox-guest-x11
+```
+
+```bash
+sudo VBoxClient --clipboard
+```
+
+
+
+---
+
+
+
+# Creating a Separate User for PHP
+
+Indeed, creating a dedicated MySQL user to manage `phpMyAdmin` is a good idea, allowing you to limit this user's privileges and enhance security. Here are the steps to create a new MySQL user, grant access, and then use this user during the `phpMyAdmin` installation:
+
+1. **Login to MySQL**:
+```bash
+mysql -u root -p
+```
+
+2. **Create a new user**: For instance, create a new user named `pmauser` and set a password. Remember to replace `YourPassword` with a strong password.
+```sql
+CREATE USER 'pmauser'@'localhost' IDENTIFIED BY 'YourPassword';
+```
+
+3. **Grant permissions to the new user**: Grant `pmauser` permissions to access all databases. You can also restrict this user's permissions as needed.
+```sql
+GRANT ALL PRIVILEGES ON *.* TO 'pmauser'@'localhost' WITH GRANT OPTION;
+```
+
+4. **Refresh permissions**:
+```sql
+FLUSH PRIVILEGES;
+```
+
+5. **Exit MySQL**:
+```sql
+EXIT;
+```
+
+Now, when you start installing `phpMyAdmin`, the installer may ask you for MySQL credentials. Here, you can use the newly created `pmauser` and the password you set for it.
+
+After installing `phpMyAdmin`, to further increase security, you can restrict the `pmauser` permissions or create more users for specific databases, assigning appropriate permissions to each.
+
+This approach not only improves security but also ensures that any issues you encounter during the `phpMyAdmin` installation are unrelated to the `root` user, making troubleshooting simpler.
+
+
+
+---
+
+
+
+# What I Did to Get phpMyAdmin Running
+
+Check whether your Apache is correctly installed by `http://localhost/`
+
+If you've verified that Apache is correctly installed and running, we'll focus on checking the phpMyAdmin configuration next.
+
+### Confirm phpMyAdmin Configuration
+
+1. **Verify the inclusion of apache.conf**:
+First, ensure `/etc/phpmyadmin/apache.conf` is included in Apache's main configuration file. Use the following command to check:
+
+```bash
+grep "Include /etc/phpmyadmin/apache.conf" /etc/apache2/apache2.conf
+```
+
+If this command returns the line containing `Include /etc/phpmyadmin/apache.conf`, the configuration file is correctly included. If nothing is returned, you need to add it manually.
+
+2. **Manually add the configuration**:
+If the above `grep` command did not return anything, you need to manually add the phpMyAdmin configuration to Apache's main config.
+
+Open Apache's main configuration file with:
+
+```bash
+sudo nano /etc/apache2/apache2.conf
+```
+
+Then, scroll to the bottom of the file and add:
+
+```
+Include /etc/phpmyadmin/apache.conf
+```
+
+Save and exit (in nano, press `Ctrl + X`, then `Y`, then `Enter`).
+
+3. **Restart Apache**:
+To apply the changes, you need to restart Apache:
+
+```bash
+sudo service apache2 restart
+```
+
+4. **Try accessing phpMyAdmin**:
+Open `http://localhost/phpmyadmin` in a browser. Check if you can access it now.
+
+These are detailed steps about confirming and modifying the phpMyAdmin configuration.
+
+
+
+---
+
+If problem appears:
+
+> <?php declare(strict_types=1); use PhpMyAdmin\Routing; if (! defined('ROOT_PATH')) {    // phpcs:disable PSR1.Files.SideEffects    define('ROOT_PATH', __DIR__ . DIRECTORY_SEPARATOR);    // phpcs:enable } global $route, $containerBuilder; require_once ROOT_PATH . 'libraries/common.inc.php'; $dispatcher = Routing::getDispatcher(); Routing::callControllerForRoute($route, $dispatcher, $containerBuilder);>
+
+
+
+This issue arises when, upon attempting to access phpMyAdmin, the server doesn't execute the PHP code but displays it as plain text. This typically means that PHP isn't properly configured, or Apache isn't correctly handling PHP requests.
+
+You used `SetHandler php-fpm` in the above `<VirtualHost>` configuration, implying you might be trying to use PHP-FPM to handle PHP requests. PHP-FPM is a PHP FastCGI Process Manager, separate from Apache.
+
+Check the following to address this issue:
+
+1. **Ensure PHP-FPM is installed and running**:
+
+```bash
+sudo apt install php-fpm
+sudo service php8.1-fpm start
+```
+
+(Note: Adjust the version in the command "8.1" based on your PHP version.)
+
+2. **Ensure Apache's `proxy_fcgi` module is enabled**:
+
+```bash
+sudo a2enmod proxy_fcgi setenvif
+```
+
+3. **Update your Apache configuration to use PHP-FPM**. Modify your `<FilesMatch>` section in `/etc/apache2/conf-available/php.conf `to:
+
+```apache
+<FilesMatch \.php$>
+    SetHandler "proxy:unix:/var/run/php/php8.1-fpm.sock|fcgi://localhost/"
+</FilesMatch>
+```
+
+Again, adjust the path "8.1" according to your PHP version.
+
+4. Then, **restart Apache**:
+
+```bash
+sudo a2enconf php
+sudo service apache2 restart
+```
+
+This should solve the issue of PHP files displaying as plain text. 
+
+
+
+---
+
+
+
+# How to Configure on a Mac
+
+To install MySQL, phpMyAdmin, and related components on a Mac, the process differs from Linux. Instead of the apt package manager used on Ubuntu and other Debian-based Linux distributions, macOS users often utilize a package manager named "Homebrew." Here's how to set up using Homebrew:
+
+### Prerequisites:
+1. **Install Homebrew** if you haven't already. Run in the Terminal:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+### Installation:
+1. **Update Homebrew**:
+
+```bash
+brew update
+```
+
+2. **Install Apache**:
+
+```bash
+brew install httpd
+```
+
+3. **Start Apache:**
+
+```bash
+sudo apachectl start
+```
+
+4. **Install MySQL:**
+```bash
+brew install mysql
+```
+
+5. **Start MySQL:**
+```bash
+brew services start mysql
+```
+
+6. **Secure your MySQL installation:**
+```bash
+mysql_secure_installation
+```
+Note: Follow the prompts to set a password for the root user.
+
+7. **Install PHP:**
+```bash
+brew install php
+```
+
+8. If you want Apache to run PHP, you'll need to configure Apache to use PHP by editing its configuration file. Open the file with:
+```bash
+sudo nano /usr/local/etc/httpd/httpd.conf
+```
+Search for `LoadModule php_module` and uncomment this line (remove the `#` at the beginning). Also, search for `DirectoryIndex` and add `index.php` to the list of files.
+
+
+
+---
+
+
+
+If you haven't found `LoadModule php_module` in `httpd.conf`, you might need to manually add the corresponding module loading statement.
+
+First, ensure you have PHP installed. Homebrew usually tells you how to configure Apache to load the PHP module after PHP installation. Please carefully review the terminal output when you installed PHP using `brew install php`.
+
+If you missed that information or couldn't find it, you can try the following steps:
+
+1. Open the Apache configuration file:
+
+```bash
+sudo nano /usr/local/etc/httpd/httpd.conf
+```
+
+2. In the `LoadModule` section of the file, manually add the PHP module loading statement. Typically, for PHP installed via Homebrew, it should look like this:
+
+```bash
+LoadModule php_module /usr/local/opt/php/lib/httpd/modules/libphp.so
+```
+
+This statement instructs Apache to load the PHP module from the specified path. The path `/usr/local/opt/php/lib/httpd/modules/libphp.so` is the default for a Homebrew PHP installation, but it might differ depending on your installation.
+
+---
+
+Next, you'll need to search for the term `DirectoryIndex`. `DirectoryIndex` refers to the default file that Apache tries to load when you visit a directory (instead of a specific file) in your browser.
+
+For example, when you visit `http://localhost/` and don't specify a file, Apache usually tries to load `index.html`. However, if your website is written in PHP, you might want Apache to load `index.php`.
+
+You might find a line like:
+
+```bash
+DirectoryIndex index.html
+```
+
+Change it to:
+
+```bash
+DirectoryIndex index.php index.html
+```
+
+With this, Apache will first try to load `index.php`. If that doesn't exist, it'll attempt to load `index.html`.
+
+After completing the above steps, save and close the file. Now, Apache is configured to parse and execute PHP code.
+
+---
+
+9. Install phpMyAdmin:
+
+```bash
+brew install phpmyadmin
+```
+
+10. Link phpMyAdmin to Apache. Edit Apache's configuration again:
+
+```bash
+sudo nano /usr/local/etc/httpd/httpd.conf
+```
+
+Add the following at the end of:
+
+```
+Include /usr/local/etc/httpd/extra/phpmyadmin.conf
+```
+
+Then,
+
+- **Create a new Apache configuration file**, such as `phpmyadmin.conf`:
+
+```bash
+sudo nano /usr/local/etc/httpd/extra/phpmyadmin.conf
+```
+
+- **Add the following content to this file**:
+
+```apache
+Alias /phpmyadmin /usr/local/share/phpmyadmin
+<Directory /usr/local/share/phpmyadmin>
+    Options Indexes FollowSymLinks MultiViews
+    AllowOverride All
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Allow from all
+    </IfModule>
+</Directory>
+```
+
+This tells Apache to redirect to the `/usr/local/share/phpmyadmin` directory when accessing the `/phpmyadmin` URL. This directory is based on the default Homebrew installation path, but you may need to adjust it based on your setup.
+
+---
+
+
+
+
+11. Restart Apache:
+
+```bash
+sudo apachectl restart
+```
+
+12. You should be able to access phpMyAdmin by opening a web browser and navigating to:
+```
+http://localhost/phpmyadmin
+```
+
+13. Log in with the root username and the password you set during the `mysql_secure_installation` step.
+
+That should be it! This guide gives you a basic setup. Depending on your needs, you might want to dive deeper into configurations, virtual hosts, etc. It's also worth noting that macOS does come with its own version of Apache and PHP, but the above method installs the latest versions and allows for more flexibility.
