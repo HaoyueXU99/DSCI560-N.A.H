@@ -28,10 +28,10 @@ def main():
     processed_csv_store = CSVStore("processed_output.csv")
     processed_csv_store.save(processed_data)
 
-    # # Save to Database
-    # db_store = DBStore("output.db")
-    # db_store.save(processed_data)
-    # db_store.close()
+    # Save to Database
+    to_db = DBStore()
+    to_db.save()
+    to_db.close()
 
 if __name__ == "__main__":
     main()
