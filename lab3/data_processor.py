@@ -12,6 +12,7 @@ class DataProcessor:
         # TODO: Add your data processing logic
 
         df = self.data
+        
 
         # Calculate the daily return and add it as a new column
         df['Daily Return'] = df['Close'].pct_change()

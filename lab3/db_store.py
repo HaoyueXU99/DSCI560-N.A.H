@@ -5,18 +5,45 @@ db_store.py:
 
 '''
 
-import sqlite3
-from data_store_interface import DataStoreInterface
+import mysql.connector
 
-class DBStore(DataStoreInterface):
-    def __init__(self, db_path="output.db"):
-        self.conn = sqlite3.connect(db_path)
-        self.cursor = self.conn.cursor()
+class DBStore:
+    def __init__(self, host='localhost', user='root', password='', dbname='portfolio_db'):
+        self.conn = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=dbname
+        )
+        self.cursor = self.conn.cursor(buffered=True)
+        self.initialize_db()
 
-    def save(self, data):
-        for ticker, df in data.items():
-            df.to_sql(ticker, self.conn, if_exists='replace')
+    def initialize_db(self):
+        # Create database if it doesn't exist
+        self.cursor.execute("CREATE DATABASE IF NOT EXISTS portfolio_db")
+        self.conn.database = "portfolio_db"
+
+        # Create table if it doesn't exist
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS portfolios (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                creation_date DATE,
+                tickers TEXT
+            )
+        """)
         self.conn.commit()
 
+    def save_portfolio(self, portfolio):
+        tickers_string = ",".join(portfolio.get_selected_tickers())
+        self.cursor.execute("INSERT INTO portfolios (creation_date, tickers) VALUES (%s, %s)", 
+                            (portfolio.creation_date, tickers_string))
+        self.conn.commit()
+
+    def get_all_portfolios(self):
+        self.cursor.execute("SELECT * FROM portfolios")
+        portfolios = self.cursor.fetchall()
+        return portfolios
+
     def close(self):
+        self.cursor.close()
         self.conn.close()
