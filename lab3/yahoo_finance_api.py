@@ -10,3 +10,12 @@ class YahooFinanceAPI(DataAPIInterface):
         data = yf.download(ticker, period=range)
         data['Ticker'] = ticker
         return data
+
+    def is_valid_ticker(self, ticker):
+            try:
+                stock = yf.Ticker(ticker)
+                if stock.history(period="1d").empty:
+                    return False
+                return True
+            except:
+                return False

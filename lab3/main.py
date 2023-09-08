@@ -15,11 +15,28 @@ def create_default_portfolio():
 
 def manage_portfolio(portfolio):
     while True:
-        print("\nPortfolio Management Menu:")
-        print("1. Add ticker to portfolio")
-        print("2. Remove ticker from portfolio")
-        print("3. Display current portfolio")
-        print("4. Finish managing portfolio, continue with current portfolio")
+        menu_items = [
+            "Portfolio Management Menu:",
+            "1. Add ticker to portfolio",
+            "2. Remove ticker from portfolio",
+            "3. Display current portfolio",
+            "4. Finish managing portfolio"
+        ]
+
+        # 计算最长的菜单项的长度
+        max_length = max(len(item) for item in menu_items)
+
+        # 打印顶部边框
+        print()
+        print("#" * (max_length + 4))
+
+        # 打印菜单项
+        for item in menu_items:
+            print(f"# {item.ljust(max_length)} #")
+
+        # 打印底部边框
+        print("#" * (max_length + 4))
+
         choice = input("Enter your choice: ")
 
         if choice == "1":
@@ -31,9 +48,12 @@ def manage_portfolio(portfolio):
         elif choice == "3":
             portfolio.display_portfolio()
         elif choice == "4":
-            break
+            if not portfolio.get_selected_tickers():
+                print("\n> Your portfolio is currently empty. Please add at least one ticker before continuing.")
+            else:
+                break
         else:
-            print("Invalid choice. Try again.")
+            print("\n> Invalid choice. Try again.")
 
 
 def save_or_load_portfolio(user_portfolio):
@@ -84,12 +104,13 @@ def main():
         manage_portfolio(user_portfolio)
 
         # After user created portfolio
-        # save_or_load_portfolio(user_portfolio)
+        save_or_load_portfolio(user_portfolio)
 
     else:
         print("Using default portfolio...")
         user_portfolio = create_default_portfolio()
         
+
     user_portfolio.display_portfolio()
 
     fetcher = DataFetcher(api, user_portfolio)
@@ -108,10 +129,6 @@ def main():
     processed_csv_store = CSVStore("processed_output.csv")
     processed_csv_store.save(processed_data)
 
-    # Save to Database
-    to_db = DBStore()
-    to_db.save()
-    to_db.close()
 
 if __name__ == "__main__":
     main()
