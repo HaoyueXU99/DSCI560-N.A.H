@@ -2,6 +2,8 @@ from yahoo_finance_api import YahooFinanceAPI
 from portfolio import UserPortfolio
 from data_fetcher import DataFetcher
 from data_processor import DataProcessor
+from csv_store import CSVStore
+from db_store import DBStore
 
 def main():
     api = YahooFinanceAPI()
@@ -10,9 +12,9 @@ def main():
     user_portfolio.add_ticker("MSFT")
     
     fetcher = DataFetcher(api, user_portfolio)
-    data = fetcher.fetch_user_portfolio_data()
+    raw_data = fetcher.fetch_user_portfolio_data()
 
-    print(data)
+    print(raw_data)
 
     # Save raw data to CSV
     raw_csv_store = CSVStore("raw_output.csv")
