@@ -8,39 +8,43 @@ import pandas as pd
 import pymysql
 
 class DBStore:
-    def __init__(self):
-        self.conn = pymysql.connect(host='localhost',db='Lab3_NAH',user='root',password='Dsci560@1234')
-        self.cur = self.conn.cursor()
-
-    def save(self):
-        self.cur.execute("DROP TABLE IF EXISTS stock_data")
-        create_table_query = """
-        CREATE TABLE IF NOT EXISTS stock_data (
-            Date datetime,
-            Ticker varchar(20),
-            Open float,
-            High float,
-            Low float,
-            Close float,
-            Adj_Close float,
-            Volume float,
-            Daily_Return varchar(30),
-            SMA varchar(30),
-            EMA varchar(30)
+    def __init__(self, host='localhost', user='root', password='', dbname='portfolio_db'):
+        self.conn = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=dbname
         )
-        """
-        self.cur.execute(create_table_query)
-        import numpy as np
-        df = pd.read_csv('processed_output.csv')
-        df = df.replace(np.nan, 'NaN')
+        self.cursor = self.conn.cursor(buffered=True)
+        self.initialize_db()
 
-        print(df)
-        for i, row in df.iterrows():
-            insert = "INSERT INTO stock_data values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-            self.cur.execute(insert, tuple(row))
+    def initialize_db(self):
+        # Create database if it doesn't exist
+        self.cursor.execute("CREATE DATABASE IF NOT EXISTS portfolio_db")
+        self.conn.database = "portfolio_db"
 
+        # Create table if it doesn't exist
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS portfolios (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                creation_date DATE,
+                tickers TEXT
+            )
+        """)
         self.conn.commit()
 
+    def save_portfolio(self, portfolio):
+        tickers_string = ",".join(portfolio.get_selected_tickers())
+        self.cursor.execute("INSERT INTO portfolios (creation_date, tickers) VALUES (%s, %s)", 
+                            (portfolio.creation_date, tickers_string))
+        self.conn.commit()
+
+    def get_all_portfolios(self):
+        self.cursor.execute("SELECT * FROM portfolios")
+        portfolios = self.cursor.fetchall()
+        return portfolios
+
     def close(self):
+
         self.cur.close()
         self.conn.close()
