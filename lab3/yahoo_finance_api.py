@@ -8,4 +8,5 @@ from api_interface import DataAPIInterface
 class YahooFinanceAPI(DataAPIInterface):
     def fetch_data(self, ticker, range="1y"):
         data = yf.download(ticker, period=range)
+        data['Ticker'] = ticker
         return data
