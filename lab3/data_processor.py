@@ -8,6 +8,7 @@ class DataProcessor:
     
     def process_data(self):
         # TODO: Add your data processing logic
+        processed_data = {}
         return processed_data
     
     def visualize_data(self):
