@@ -4,8 +4,8 @@ db_store.py:
     Here we take SQLite as an example, you can modify it to other databases as needed.
 
 '''
-
-import mysql.connector
+import pandas as pd                                          
+import pymysql
 
 class DBStore:
     def __init__(self, host='localhost', user='root', password='', dbname='portfolio_db'):
@@ -45,5 +45,6 @@ class DBStore:
         return portfolios
 
     def close(self):
-        self.cursor.close()
+
+        self.cur.close()
         self.conn.close()
