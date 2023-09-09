@@ -1,5 +1,47 @@
+# Stock Portfolio Management System
 
-# Configure your MySQL Database
+A simple application that lets users create and manage their stock portfolios using data fetched from the Yahoo Finance API. Users can store their custom portfolios in a MySQL database for later retrieval.
+
+## Features
+
+- Fetch stock data from Yahoo Finance.
+- Create custom stock portfolios.
+- Manage (add/remove stocks from) existing portfolios.
+- Display portfolio data.
+- Save and retrieve portfolios from a MySQL database.
+
+## Prerequisites
+
+- Python 3.x
+- MySQL Server
+- Required Python libraries: `yfinance`, `mysql-connector-python`.
+
+## Setup
+
+1. Install the required Python libraries:
+
+```bash
+pip install yfinance mysql-connector-python
+```
+
+2. Ensure that your MySQL server is up and running.
+
+3. Setup your database and tables. Check it in *Configure your MySQL Database* Section.
+
+
+## Running the Program
+
+1. Navigate to the directory containing the code files.
+2. Run the `main.py` script:
+
+```bash
+python main.py
+```
+
+3. Follow the on-screen prompts to manage your stock portfolio.
+
+
+## Configure your MySQL Database
 
 1. Log in as MySQL Administrator:
    Open your command-line terminal or MySQL client tool and log in as the MySQL Administrator. You can use the following command, replacing `root` with your administrator username. 
