@@ -6,6 +6,7 @@ db_store.py:
 '''
 
 import mysql.connector
+import numpy as np
 
 class DBStore:
     def __init__(self, host='localhost', user='Dsci560', password='Dsci560@1234', dbname='Lab3_NAH'):
@@ -31,6 +32,22 @@ class DBStore:
                 tickers TEXT
             )
         """)
+
+        # Create stocks info table if it doesn't exist
+        create_table_query = """
+        CREATE TABLE IF NOT EXISTS stock_raw_data (
+            Date datetime,
+            Open float,
+            High float,
+            Low float,
+            Close float,
+            Adj_Close float,
+            Volume float,
+            Ticker varchar(20)
+        )
+        """
+        self.cursor.execute(create_table_query)
+
         self.conn.commit()
 
     def portfolio_exists(self, tickers):
@@ -51,12 +68,20 @@ class DBStore:
         self.conn.commit()
         print("\n> Portfolio saved to database!")
 
-
-
     def get_all_portfolios(self):
         self.cursor.execute("SELECT * FROM portfolios")
         portfolios = self.cursor.fetchall()
         return portfolios
+
+    def save_raw_data(self, raw_data):
+        raw_data = raw_data.replace(np.nan,'NaN')
+        for i, row in raw_data.iterrows():
+            listt = list(row)
+            listt.insert(0,i)
+            result = tuple(listt)
+            insert = "INSERT INTO stock_raw_data values(%s, %s, %s, %s, %s, %s, %s, %s)"
+            self.cursor.execute(insert, tuple(result))
+        self.conn.commit()
 
     def close(self):
         self.cursor.close()

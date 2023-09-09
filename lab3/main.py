@@ -98,6 +98,7 @@ def save_or_load_portfolio(user_portfolio):
 def main():
     api = YahooFinanceAPI()
     user_portfolio = None
+    db = DBStore()
 
     # Interact with user to manage their portfolio
     create_own = input("Do you want to create your own portfolio? (yes/no): ").lower()
@@ -122,7 +123,11 @@ def main():
     # Save raw data to CSV
     raw_csv_store = CSVStore("raw_output.csv")
     raw_csv_store.save(raw_data)
-    
+
+    # Save raw data to database
+    db.save_raw_data(raw_data)
+    db.close()
+
     processor = DataProcessor(raw_data)
     processed_data = processor.process_data()
     processor.visualize_data()
