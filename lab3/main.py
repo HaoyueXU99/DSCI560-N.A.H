@@ -14,40 +14,62 @@ def create_default_portfolio():
     return default_portfolio
 
 def manage_portfolio(portfolio):
+    
+    db = DBStore()
+
     while True:
+
         menu_items = [
             "Portfolio Management Menu:",
-            "1. Add ticker to portfolio",
-            "2. Remove ticker from portfolio",
-            "3. Display current portfolio",
-            "4. Finish managing portfolio"
+            "1. Load portfolio from Database",
+            "2. Add ticker to portfolio ",
+            "3. Remove ticker from portfolio",
+            "4. Display current portfolio",
+            "5. Finish managing portfolio", 
         ]
 
-        # 计算最长的菜单项的长度
+        # calculate the length of the longest menu item
         max_length = max(len(item) for item in menu_items)
-
-        # 打印顶部边框
+        # print top border
         print()
         print("#" * (max_length + 4))
-
-        # 打印菜单项
+        # print menu items
         for item in menu_items:
             print(f"# {item.ljust(max_length)} #")
-
-        # 打印底部边框
+        # print bottom border
         print("#" * (max_length + 4))
 
         choice = input("Enter your choice: ")
 
         if choice == "1":
+            portfolios = db.get_all_portfolios()
+            if not portfolios:
+                print("No portfolios found in the database!")
+                continue
+
+            print("\nAvailable Portfolios:")
+            for idx, (id, creation_date, tickers) in enumerate(portfolios):
+                print(f"{idx + 1}. Created on {creation_date} with tickers: {tickers}")
+            selected = int(input("Select a portfolio by number: ")) - 1
+
+            if 0 <= selected < len(portfolios):
+                _, _, tickers_string = portfolios[selected]
+                tickers = tickers_string.split(',')
+                portfolio.selected_tickers = tickers
+                print("\n> Portfolio loaded!")
+            else:
+                print("\n> Invalid selection!")
+
+        elif choice == "2":
             ticker = input("Enter the ticker you want to add: ").upper()
             portfolio.add_ticker(ticker)
-        elif choice == "2":
+        elif choice == "3":
             ticker = input("Enter the ticker you want to remove: ").upper()
             portfolio.remove_ticker(ticker)
-        elif choice == "3":
-            portfolio.display_portfolio()
+
         elif choice == "4":
+            portfolio.display_portfolio()
+        elif choice == "5":
             if not portfolio.get_selected_tickers():
                 print("\n> Your portfolio is currently empty. Please add at least one ticker before continuing.")
             else:
@@ -60,35 +82,15 @@ def save_or_load_portfolio(user_portfolio):
     db = DBStore()
     print("\nPortfolio Options:")
     print("1. Save current portfolio to database")
-    print("2. Load a portfolio from database")
-    print("3. Continue without saving/loading")
+    print("2. Continue without saving/loading")
     choice = input("Enter your choice: ")
 
     if choice == "1":
         db.save_portfolio(user_portfolio)
-        print("Portfolio saved to database!")
     elif choice == "2":
-        portfolios = db.get_all_portfolios()
-        if not portfolios:
-            print("No portfolios found in the database!")
-            return
-
-        print("\nAvailable Portfolios:")
-        for idx, (id, creation_date, tickers) in enumerate(portfolios):
-            print(f"{idx + 1}. Created on {creation_date} with tickers: {tickers}")
-        selected = int(input("Select a portfolio by number: ")) - 1
-
-        if 0 <= selected < len(portfolios):
-            _, _, tickers_string = portfolios[selected]
-            tickers = tickers_string.split(',')
-            user_portfolio.selected_tickers = tickers
-            print("Portfolio loaded!")
-        else:
-            print("Invalid selection!")
-    elif choice == "3":
         pass
     else:
-        print("Invalid choice. Continuing without saving/loading.")
+        print("\n> Invalid choice. Continuing without saving/loading.")
 
     db.close()
 
