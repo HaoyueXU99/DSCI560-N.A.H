@@ -69,7 +69,7 @@ class DBStore:
         if self.portfolio_exists(tickers):
             print("\n> This portfolio already exists in the database!")
             return
-        tickers_string = ",".join(tickers)
+        tickers_string = ",".join(sorted(tickers))
         self.cursor.execute("INSERT INTO portfolios (creation_date, tickers) VALUES (%s, %s)", 
                             (portfolio.creation_date, tickers_string))
         # Commit the changes
