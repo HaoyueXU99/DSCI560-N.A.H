@@ -9,11 +9,11 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from htmlTemplates import css, bot_template, user_template
 from langchain import HuggingFacePipeline
+from langchain.llms import HuggingFacePipeline
 from langchain.llms import LlamaCpp
 import pandas as pd
 import mysql.connector
-import numpy as np
-
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 # from streamlit_login_auth_ui.widgets import __login__
 
 #Change MySQL credentials
@@ -23,7 +23,6 @@ import numpy as np
 # PASSWORD = "Dsci560@1234"
 # TABLE_NAME = "PDF_Text"
 
-
 HOSTNAME = "localhost"
 DATABASE = "Lab3_NAH"
 USERNAME = "Dsci560"
@@ -31,16 +30,16 @@ PASSWORD = "Dsci560@1234"
 TABLE_NAME = "PDF_Text"
 
 # Function to extract text content from multiple PDFs.
-
-
 def get_pdf_text(pdf_docs):
+
     texts = []
+
     for pdf in pdf_docs:
         pdf_reader = PdfReader(pdf)
         pages_text = [page.extract_text() for page in pdf_reader.pages]
         texts.extend(pages_text)
-    return ''.join(texts)
 
+    return ''.join(texts)
 
 # Function to split the extracted text into chunks.
 def get_text_chunks(text):
@@ -90,30 +89,24 @@ def store_db(text_chunks):
 
 # Function to create a vector store based on the text chunks using OpenAIEmbeddings.
 def get_vectorstore(text_chunks):
-
-    embeddings = OpenAIEmbeddings()
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2")
     vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
-
     return vectorstore
 
 # Function to create a conversational retrieval chain to aid in the chat function.
 def get_conversation_chain(vectorstore):
-
-    # Initialize ChatOpenAI and ConversationBufferMemory
-    llm = ChatOpenAI()
-    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-
-    # Setup retriever options
-    retriever_options = {
-        "search_type": "similarity",
-        "search_kwargs": {"k": 4}
-    }
-
-    # Create the conversational retrieval chain
-
+    model_id = "gpt2"
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(model_id)
+    pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=300)
+    llm = HuggingFacePipeline(pipeline=pipe)
+    memory = ConversationBufferMemory(
+        memory_key='chat_history', return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
-        retriever=vectorstore.as_retriever(**retriever_options),
+        retriever=vectorstore.as_retriever(
+            search_type="similarity", search_kwargs={"k": 4}),
         memory=memory,
     )
     return conversation_chain
@@ -189,12 +182,41 @@ def main():
     
     st.write(css, unsafe_allow_html=True)
 
+    # __login__obj = __login__(auth_token="courier_auth_token", 
+    #                     company_name="Shims",
+    #                     width=200, height=250, 
+    #                     logout_button_name='Logout', hide_menu_bool=False, 
+    #                     hide_footer_bool=False, 
+    #                     lottie_url='https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json')
+
+
+    # Initialize a session state variable to track login status
+    # if "is_logged_in" not in st.session_state:
+    #     st.session_state.is_logged_in = False
+    
+
+    # # Display the login UI if the user is not logged in
+    # if not st.session_state.is_logged_in:
+
+    #     LOGGED_IN = __login__obj.build_login_ui()
+
+    #     if LOGGED_IN == True:
+    #         st.session_state.is_logged_in = True
+    #         st.markdown("Your Streamlit Application Begins here!")
+        
+    # else:
+        # User is logged in, allow them to access the Chat with PDFs page
+
+        # Initialize conversation and chat history in the session state if they don't exist.
 
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = None
 
+    # Main header for the app.
+    # username= __login__obj.get_username()
+    # st.header(username,":memo: Chat with your PDFs now!")
 
     st.header(":memo: Chat with your PDFs now!")
 
@@ -207,7 +229,6 @@ def main():
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-
     # User-provided prompt
     user_question = st.chat_input("Ask questions about your documents:")
     if user_question:
@@ -216,85 +237,33 @@ def main():
             st.write(user_question)
         handle_userinput(user_question)
 
-
-    if st.button('Clear Chat History', on_click=clear_chat_history, key='clear_button', help="Click to clear chat history"):
-        st.info("Chat history has been cleared.")
-
     # Sidebar for uploading PDF documents.
     with st.sidebar:
         st.title("Welcome to Chat with PDFs! :wave:")
-
-
-        # If 'upload_key' is not in session_state, initialize it with a random value
-        if 'upload_key' not in st.session_state:
-            st.session_state.upload_key = str(np.random.randint(0, 1000000))
-
-        # Step 1: Add a radio button for user choice
-        upload_choice = st.radio(
-            "Choose how you'd like to upload PDFs:",
-            ("Upload a single PDF", "Upload multiple PDFs")
-        )
-        
-        # Step 2: Adjust the file_uploader based on the user's choice
-        if upload_choice == "Upload a single PDF":
-            pdf_docs = st.file_uploader(
-                "Please submit your PDF before asking! 💬 ", key=st.session_state.upload_key, accept_multiple_files=False
-            )
-        else:
-            pdf_docs = st.file_uploader(
-                "Please submit your PDFs before asking! 💬 ", key=st.session_state.upload_key, accept_multiple_files=True
-            )
-            
-
-                # Store the uploaded documents in session state
-        if pdf_docs:
-            st.session_state.uploaded_docs = pdf_docs
-
-    # Button to delete the current documents
-        if st.button('Delete Current Document(s)'):
-            if 'uploaded_docs' in st.session_state:
-                del st.session_state.uploaded_docs  # Delete the uploaded documents from the session state
-                st.session_state.deleted = True  # Set the deleted state to True
-                # Change the 'upload_key' to reset the file uploader
-                st.session_state.upload_key = str(np.random.randint(0, 1000000))
-                st.experimental_rerun()  # Rerun the app
-
-        if st.session_state.get('deleted', False):
-            st.warning("The uploaded document(s) have been deleted!")
-            st.session_state.deleted = False  # Reset the deleted state after showing the message
-
-
-
+        pdf_docs = st.file_uploader(
+            "Please submit your PDF before asking! 💬 ", accept_multiple_files=True)
         if st.button("Submit"):
+            with st.spinner("Processing"):
+                # Extract text from the PDFs.
+                raw_text = get_pdf_text(pdf_docs)
 
-            if not st.session_state.uploaded_docs:
-                st.warning("Please submit a PDF before asking!")
-            else:
+                # Split the extracted text into chunks.
+                text_chunks = get_text_chunks(raw_text)
 
-                with st.spinner("Processing"):
-                    # Extract text from the PDFs.
-                    if isinstance(pdf_docs, list):
-                        raw_text = get_pdf_text(pdf_docs)
-                    else:
-                        raw_text = get_pdf_text([pdf_docs])
+                #store chunks to MySQL
+                store_db(text_chunks)
 
+                # Create a vector store based on the text chunks.
+                vectorstore = get_vectorstore(text_chunks)
 
-                    # Split the extracted text into chunks.
-                    text_chunks = get_text_chunks(raw_text)
-
-                    #store chunks to MySQL
-                    store_db(text_chunks)
-
-                    # Create a vector store based on the text chunks.
-                    vectorstore = get_vectorstore(text_chunks)
-
-                    # Initialize the conversational retrieval chain for the session.
-                    st.session_state.conversation = get_conversation_chain(
-                        vectorstore)
-                    
-                    st.success("Upload successfully!")              
-                    
-
+                # Initialize the conversational retrieval chain for the session.
+                st.session_state.conversation = get_conversation_chain(
+                    vectorstore)
+                
+                st.success("Upload successfully!")              
+                
+                if st.button('Clear Chat History', on_click=clear_chat_history, key='clear_button', help="Click to clear chat history"):
+                    st.info("Chat history has been cleared.")
 
                 
         st.subheader("About")
