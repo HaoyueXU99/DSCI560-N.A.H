@@ -118,17 +118,40 @@ def get_conversation_chain(vectorstore):
     )
     return conversation_chain
 
+# # Function to handle the user input, get a response, and manage the chat history.
+# def handle_userinput(user_question):
+
+#     if not st.session_state.conversation or not callable(st.session_state.conversation):
+#         st.session_state.show_warning = True
+#         return
+    
+#     st.session_state.show_warning = False
+    
+#     # Get the response from the conversation chain.
+#     response = st.session_state.conversation({'question': user_question})
+
+#     # Append the chatbot's response to the chat history.
+#     st.session_state.messages.append({"role": "assistant", "content": response['answer']})
+
+#     # Display the chatbot's response.
+#     with st.chat_message("assistant"):
+#         st.write(response['answer'])
+
+
 # Function to handle the user input, get a response, and manage the chat history.
 def handle_userinput(user_question):
 
-    if not st.session_state.conversation or not callable(st.session_state.conversation):
-        st.session_state.show_warning = True
-        return
-    
-    st.session_state.show_warning = False
-    
-    # Get the response from the conversation chain.
-    response = st.session_state.conversation({'question': user_question})
+    # Check if the conversation has been initialized with PDF content
+    if 'conversation' in st.session_state and st.session_state.conversation is not None:
+        # Get the response from the conversation chain with PDF content.
+        response = st.session_state.conversation({'question': user_question})
+    else:
+        # Initialize a direct GPT-3 conversation chain without PDF content.
+        llm = ChatOpenAI()
+        memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+        retriever = []
+        direct_conversation_chain = ConversationalRetrievalChain.from_llm(llm=llm, memory=memory, retriever=retriever)
+        response = direct_conversation_chain({'question': user_question})
 
     # Append the chatbot's response to the chat history.
     st.session_state.messages.append({"role": "assistant", "content": response['answer']})
@@ -136,6 +159,8 @@ def handle_userinput(user_question):
     # Display the chatbot's response.
     with st.chat_message("assistant"):
         st.write(response['answer'])
+
+
 
 # Function to clear the chat history
 def clear_chat_history():
@@ -148,44 +173,9 @@ def main():
     load_dotenv()
 
     # Set the page configuration for the Streamlit app.
-    st.set_page_config(page_title="PDFs Masters",
-                       page_icon=":mortar_board:",
+    st.set_page_config(page_title="Expedition Bot: Plan Your Next trip!",
+                       page_icon=":rocket:",
                        layout="centered")
-    
-    st.markdown("""
-    <style type="text/css">
-    blockquote {
-        margin: 1em 0px 1em -1px;
-        padding: 0px 0px 0px 1.2em;
-        font-size: 20px;
-        border-left: 5px solid rgb(230, 234, 241);
-        # background-color: rgb(129, 164, 182);
-    }
-    blockquote p {
-        font-size: 30px;
-        color: #FFFFFF;
-    }
-    [data-testid=stSidebar] {
-        background-color: rgb(129, 164, 182) !important;
-        color: #FFFFFF;
-    }
-    [aria-selected="true"] {
-        color: #000000;
-    }    
-    button {
-        color: rgb(129, 164, 182) !important;
-    }
-    ::placeholder {
-        color: rgb(129, 164, 182) !important;
-    }  
-    input {
-        color: #115675 !important;
-                
-    }
-                                  
-    </style>
-    
-    """, unsafe_allow_html=True)
     
     st.write(css, unsafe_allow_html=True)
 
@@ -196,7 +186,7 @@ def main():
         st.session_state.chat_history = None
 
 
-    st.header(":memo: Chat with your PDFs now!")
+    st.header(":astronaut: Chat with Questy Now!")
 
     # Store conversation messages
     if "messages" not in st.session_state.keys():
@@ -222,7 +212,7 @@ def main():
 
     # Sidebar for uploading PDF documents.
     with st.sidebar:
-        st.title("Welcome to Chat with PDFs! :wave:")
+        st.title("Welcome Adventurer! :wave:")
 
 
         # If 'upload_key' is not in session_state, initialize it with a random value
@@ -267,8 +257,16 @@ def main():
 
         if st.button("Submit"):
 
-            if not st.session_state.uploaded_docs:
-                st.warning("Please submit a PDF before asking!")
+            if not st.session_state.get('uploaded_docs'):
+                # If no PDF is uploaded, we initialize the direct conversation chain
+                # without relying on the PDF content
+                if 'conversation' not in st.session_state or st.session_state.conversation is None:
+                    llm = ChatOpenAI()
+                    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+                    retriever = []
+                    st.session_state.conversation = ConversationalRetrievalChain.from_llm(llm=llm, memory=memory, retriever=retriever)
+                st.warning("You can now chat directly without uploading a PDF.")
+            
             else:
 
                 with st.spinner("Processing"):

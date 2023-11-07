@@ -23,6 +23,35 @@ css = '''
   padding: 0 1.5rem;
   color: #fff;
 }
+
+blockquote {
+    margin: 1em 0px 1em -1px;
+    padding: 0px 0px 0px 1.2em;
+    font-size: 20px;
+    border-left: 5px solid rgb(230, 234, 241);
+    # background-color: rgb(129, 164, 182);
+}
+blockquote p {
+    font-size: 30px;
+    color: #FFFFFF;
+}
+[data-testid=stSidebar] {
+    background-color: rgb(129, 164, 182) !important;
+    color: #FFFFFF;
+}
+[aria-selected="true"] {
+    color: #000000;
+}    
+button {
+    color: rgb(129, 164, 182) !important;
+}
+::placeholder {
+    color: rgb(129, 164, 182) !important;
+}  
+input {
+    color: #115675 !important;
+            
+}
 '''
 
 bot_template = '''
