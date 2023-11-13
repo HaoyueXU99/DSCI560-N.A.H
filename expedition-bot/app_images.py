@@ -23,8 +23,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
-import base64
-
 
 #Scrape flight information from Kayak website
 def scrape_flights(text):
@@ -135,7 +133,6 @@ def get_cheapest_flights_response(flight_data, url, num_flights=5):
     
     return response
 
-
 def extract_images_from_pdf(pdf_file):
     reader = PdfReader(pdf_file)
     page = reader.pages[0]  # You might need to adjust the page index
@@ -189,39 +186,45 @@ def get_conversation_chain(vectorstore, openai_api_key):
     return conversation_chain
 
 # Function to handle the user input, get a response, and manage the chat history.
-def handle_userinput(user_question):
 
-    if 'flight' in user_question.lower():
-        flight_data, url = scrape_flights(user_question)
-        response = get_cheapest_flights_response(flight_data, url)
+def handle_userinput(user_question, pdf_docs):
+    if user_question:
+        if 'flight' in user_question.lower():
+            flight_data, url = scrape_flights(user_question)
+            response = get_cheapest_flights_response(flight_data, url)
 
-        # Append the chatbot's response to the chat history.
-        st.session_state.messages.append({"role": "assistant", "content": response})
+            # Append the chatbot's response to the chat history.
+            st.session_state.messages.append({"role": "assistant", "content": response, "image_data": get_first_image_data(pdf_docs)})
 
-        # Display the chatbot's response.
-        with st.chat_message("assistant"):
-            st.write(response)
+            # Display the chatbot's response.
+            with st.chat_message("assistant"):
+                st.write(response)
+
+            # Display the image using HTML
+            first_image_data = get_first_image_data(pdf_docs)
+            if first_image_data:
+                st.write(f'<img src="data:image/png;base64,{first_image_data}" alt="Image" width="200">')
+        else:
+            if not st.session_state.conversation or not callable(st.session_state.conversation):
+                st.session_state.show_warning = True
+                return
+
+            st.session_state.show_warning = False
+
+            # Get the response from the conversation chain.
+            response = st.session_state.conversation({'question': user_question})
+
+            # Append the chatbot's response to the chat history.
+            st.session_state.messages.append({"role": "assistant", "content": response['answer']})
+
+            # Display the chatbot's response.
+            with st.chat_message("assistant"):
+                st.write(response['answer'])
 
     else:
-        if not st.session_state.conversation or not callable(st.session_state.conversation):
-            st.session_state.show_warning = True
-            return
-        
-        st.session_state.show_warning = False
-        
-        # Get the response from the conversation chain.
-        response = st.session_state.conversation({'question': user_question})
+        st.warning("Please provide a valid user question and submit a PDF before asking!")
 
-        # Append the chatbot's response to the chat history.
-        st.session_state.messages.append({"role": "assistant", "content": response['answer']})
-
-        # Display the chatbot's response.
-        with st.chat_message("assistant"):
-            st.write(response['answer'])
-
-
-
-
+import base64
 def get_first_image_data(pdf_docs):
     if pdf_docs:
         first_pdf = pdf_docs[0] if isinstance(pdf_docs, list) else pdf_docs
@@ -239,7 +242,6 @@ def image_in_chat(image_data, caption):
     st.markdown(image_str, unsafe_allow_html=True)
 
 
-
 # Function to clear the chat history
 def clear_chat_history():
 
@@ -251,9 +253,44 @@ def main():
     load_dotenv()
 
     # Set the page configuration for the Streamlit app.
-    st.set_page_config(page_title="Expedition Bot: Plan Your Next trip!",
-                       page_icon=":rocket:",
+    st.set_page_config(page_title="PDFs Masters",
+                       page_icon=":mortar_board:",
                        layout="centered")
+    
+    st.markdown("""
+    <style type="text/css">
+    blockquote {
+        margin: 1em 0px 1em -1px;
+        padding: 0px 0px 0px 1.2em;
+        font-size: 20px;
+        border-left: 5px solid rgb(230, 234, 241);
+        # background-color: rgb(129, 164, 182);
+    }
+    blockquote p {
+        font-size: 30px;
+        color: #FFFFFF;
+    }
+    [data-testid=stSidebar] {
+        background-color: rgb(129, 164, 182) !important;
+        color: #FFFFFF;
+    }
+    [aria-selected="true"] {
+        color: #000000;
+    }    
+    button {
+        color: rgb(129, 164, 182) !important;
+    }
+    ::placeholder {
+        color: rgb(129, 164, 182) !important;
+    }  
+    input {
+        color: #115675 !important;
+                
+    }
+                                  
+    </style>
+    
+    """, unsafe_allow_html=True)
     
     st.write(css, unsafe_allow_html=True)
 
@@ -262,12 +299,11 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = None
 
-    st.header(":astronaut: Chat with Questy Now!")
-
+    st.header(":memo: Chat with your PDFs now!")
 
     # Store conversation messages
     if "messages" not in st.session_state.keys():
-        st.session_state.messages = [{"role": "assistant", "content": "How may I assist you with your trip?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "How may I assist you with your documents?"}]
 
     # Display or clear chat messages
     for message in st.session_state.messages:
@@ -275,20 +311,30 @@ def main():
             st.write(message["content"])
 
     # User-provided prompt
-    user_question = st.chat_input("Ask questions about your trip:")
+    user_question = st.chat_input("Ask questions about your documents:")
     if user_question:
         st.session_state.messages.append({"role": "user", "content": user_question})
         with st.chat_message("user"):
             st.write(user_question)
-        handle_userinput(user_question)
+
+        if not st.session_state.get('uploaded_docs'):
+            st.warning("Please submit a PDF before asking questions!")
+            st.session_state.show_warning = True
+        else:
+            st.session_state.show_warning = False
+            st.success("Question received!")
+            st.success("Handling user input...") 
+            handle_userinput(user_question, st.session_state.uploaded_docs)
+
+    else:
+        st.session_state.show_warning = False
 
     if st.button('Clear Chat History', on_click=clear_chat_history, key='clear_button', help="Click to clear chat history"):
         st.info("Chat history has been cleared.")
 
     # Sidebar for uploading PDF documents.
     with st.sidebar:
-
-        st.title("Welcome Adventurer! :wave:")
+        st.title("Welcome to Chat with PDFs! :wave:")
 
         # If 'upload_key' is not in session_state, initialize it with a random value
         if 'upload_key' not in st.session_state:
@@ -328,7 +374,6 @@ def main():
             st.session_state.deleted = False  # Reset the deleted state after showing the message
 
         if st.button("Submit"):
-
             if not st.session_state.uploaded_docs:
                 st.warning("Please submit a PDF before asking!")
             else:
@@ -352,15 +397,17 @@ def main():
                     # Initialize the conversational retrieval chain for the session.
                     st.session_state.conversation = get_conversation_chain(
                         vectorstore, api_key)
-                    
-                    # Extract images from the uploaded PDF
+
+                        # Extract images from the uploaded PDF
                     pdf_images = extract_images_from_pdf(st.session_state.uploaded_docs)
 
                     # Display the first image (you might need to adjust this based on your use case)
                     if pdf_images:
                         st.image(pdf_images[0], caption='Extracted Image', use_column_width=True)
 
-                    
+                    # handle_userinput(user_question, pdf_docs)
+
+                        
                     st.success("Upload successfully!")              
                     
         st.subheader("About")
