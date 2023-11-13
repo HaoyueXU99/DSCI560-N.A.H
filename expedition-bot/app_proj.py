@@ -296,18 +296,18 @@ def main():
 
         # Step 1: Add a radio button for user choice
         upload_choice = st.radio(
-            "Choose how you'd like to upload PDFs:",
+            "Do you have a travel guide? You can upload one to ask! \n Choose how you'd like to upload PDFs:",
             ("Upload a single PDF", "Upload multiple PDFs")
         )
         
         # Step 2: Adjust the file_uploader based on the user's choice
         if upload_choice == "Upload a single PDF":
             pdf_docs = st.file_uploader(
-                "Please submit your PDF before asking! 💬 ", key=st.session_state.upload_key, accept_multiple_files=False
+                "Please submit your travel guide before asking! 💬 ", key=st.session_state.upload_key, accept_multiple_files=False
             )
         else:
             pdf_docs = st.file_uploader(
-                "Please submit your PDFs before asking! 💬 ", key=st.session_state.upload_key, accept_multiple_files=True
+                "Please submit your travel guides before asking! 💬 ", key=st.session_state.upload_key, accept_multiple_files=True
             )
             
                 # Store the uploaded documents in session state
