@@ -39,25 +39,23 @@ def get_vectorstore(text_chunks, openai_api_key):
 def handle_userinput(user_question, pdf_docs):
     if user_question:
         if 'flight' in user_question.lower():
-
-          
             flight_data, url = scrape_flights(user_question)
             response = get_cheapest_flights_response(flight_data, url)
-            
 
             # Append the chatbot's response to the chat history.
-            st.session_state.messages.append({"role": "assistant", "content": response, "image_data": get_first_image_data(pdf_docs)})
+            # st.session_state.messages.append({"role": "assistant", "content": response, "image_data": get_first_image_data(pdf_docs)})
+            st.session_state.messages.append({"role": "assistant", "content": response})
 
             # Display the chatbot's response.
             with st.chat_message("assistant"):
                 st.write(response)
 
-            # Display the image using HTML
-            first_image_data = get_first_image_data(pdf_docs)
-            if first_image_data:
-                st.write(f'<img src="data:image/png;base64,{first_image_data}" alt="Image" width="200">')
+            # # Display the image using HTML
+            # first_image_data = get_first_image_data(pdf_docs)
+            # if first_image_data:
+            #     st.write(f'<img src="data:image/png;base64,{first_image_data}" alt="Image" width="200">')
         
-        if 'hotel' in user_question.lower():
+        elif 'hotel' in user_question.lower():
             hotel_data, city, nights, url = scrape_hotels(user_question)
             response = get_hotels_response(hotel_data, city, nights, url)
 
@@ -86,3 +84,4 @@ def handle_userinput(user_question, pdf_docs):
 
     else:
         st.warning("Please provide a valid user question and submit a PDF before asking!")
+

@@ -109,6 +109,9 @@ def scrape_hotels(text):
     hotels.dropna(inplace=True)
     hotels_sorted = hotels.sort_values(by=['price', 'rating'], ascending=[True, False])
 
+    hotels_sorted.reset_index(drop=True, inplace=True)
+    print(hotels_sorted)
+
     return hotels_sorted, city, number_of_nights, url
 
 #Scrape flight information from Kayak website

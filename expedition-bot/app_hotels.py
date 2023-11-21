@@ -105,6 +105,7 @@ def scrape_flights(text):
     destination_pattern = r"to (\w{3})\W"
     startdate_pattern = r"from (\d+-\d+-\d+)"
     enddate_pattern = r"to (\d+-\d+-\d+)"
+    
     try:
         origin = re.findall(origin_pattern, text.lower())[0]
         destination = re.findall(destination_pattern, text.lower())[0]
