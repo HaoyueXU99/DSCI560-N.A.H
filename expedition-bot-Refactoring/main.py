@@ -22,10 +22,9 @@ def main():
 
     initialize_config()
 
-
     # Set the page configuration for the Streamlit app.
-    st.set_page_config(page_title="PDFs Masters",
-                       page_icon=":mortar_board:",
+    st.set_page_config(page_title="Expedition Bot: Plan Your Next trip!",
+                       page_icon=":rocket:",
                        layout="centered")
     
     st.write(css, unsafe_allow_html=True)
@@ -35,11 +34,11 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = None
 
-    st.header(":memo: Chat with your PDFs now!")
+    st.header(":astronaut: Chat with Expedition Bot Now!")
 
     # Store conversation messages
     if "messages" not in st.session_state.keys():
-        st.session_state.messages = [{"role": "assistant", "content": "How may I assist you with your documents?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "How may I assist you with your trip?"}]
 
     # Display or clear chat messages
     for message in st.session_state.messages:
@@ -47,7 +46,8 @@ def main():
             st.write(message["content"])
 
     # User-provided prompt
-    user_question = st.chat_input("Ask questions about your documents:")
+    user_question = st.chat_input("Ask questions about your trip:")
+
     if user_question:
         st.session_state.messages.append({"role": "user", "content": user_question})
         with st.chat_message("user"):
@@ -70,7 +70,7 @@ def main():
 
     # Sidebar for uploading PDF documents.
     with st.sidebar:
-        st.title("Welcome to Chat with PDFs! :wave:")
+        st.title("Welcome Adventurer! :wave:")
 
         # If 'upload_key' is not in session_state, initialize it with a random value
         if 'upload_key' not in st.session_state:
@@ -78,18 +78,18 @@ def main():
 
         # Step 1: Add a radio button for user choice
         upload_choice = st.radio(
-            "Choose how you'd like to upload PDFs:",
+            "Do you have a travel guide? You can upload one to ask! \n Choose how you'd like to upload PDFs:",
             ("Upload a single PDF", "Upload multiple PDFs")
         )
         
         # Step 2: Adjust the file_uploader based on the user's choice
         if upload_choice == "Upload a single PDF":
             pdf_docs = st.file_uploader(
-                "Please submit your PDF before asking! 💬 ", key=st.session_state.upload_key, accept_multiple_files=False
+                "Please submit your travel guide before asking! 💬 ", key=st.session_state.upload_key, accept_multiple_files=False
             )
         else:
             pdf_docs = st.file_uploader(
-                "Please submit your PDFs before asking! 💬 ", key=st.session_state.upload_key, accept_multiple_files=True
+                "Please submit your travel guides before asking! 💬 ", key=st.session_state.upload_key, accept_multiple_files=True
             )
             
                 # Store the uploaded documents in session state

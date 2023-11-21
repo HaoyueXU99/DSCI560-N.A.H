@@ -40,7 +40,7 @@ blockquote p {
 }
 [data-testid=stSidebar] {
     background-color: #a7c957 !important; /* 芦笋绿 */
-    color: #f2e8cf; /* 羊皮纸色 */
+    # color: #f2e8cf; /* 羊皮纸色 */
 }
 [aria-selected="true"] {
     color: #bc4749; /* 苦甜闪光 */
