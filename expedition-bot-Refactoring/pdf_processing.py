@@ -6,7 +6,7 @@ from langchain.text_splitter import CharacterTextSplitter
 
 def extract_images_from_pdf(pdf_file):
     reader = PdfReader(pdf_file)
-    page = reader.pages[0]  # You might need to adjust the page index
+    page = reader.pages[16]  # You might need to adjust the page index
     count = 0
     images = []
 

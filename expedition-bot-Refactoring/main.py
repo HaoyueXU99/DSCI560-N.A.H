@@ -125,7 +125,7 @@ def main():
                     text_chunks = get_text_chunks(raw_text)
 
                     #Open API Key
-                    api_key = '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'
+                    api_key = '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'
 
                     # Create a vector store based on the text chunks.
                     vectorstore = get_vectorstore(text_chunks, api_key)
@@ -137,9 +137,9 @@ def main():
                         # Extract images from the uploaded PDF
                     pdf_images = extract_images_from_pdf(st.session_state.uploaded_docs)
 
-                    # Display the first image (you might need to adjust this based on your use case)
-                    if pdf_images:
-                        st.image(pdf_images[0], caption='Extracted Image', use_column_width=True)
+                    # # Display the first image (you might need to adjust this based on your use case)
+                    # if pdf_images:
+                    #     st.image(pdf_images[0], caption='Extracted Image', use_column_width=True)
 
                     # handle_userinput(user_question, pdf_docs)
 

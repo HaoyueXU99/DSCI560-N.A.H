@@ -8,9 +8,10 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from scrapers import scrape_hotels, scrape_flights
 from responses import get_cheapest_flights_response, get_hotels_response
+from pdf_processing import extract_images_from_pdf
 import streamlit as st
 from utils import get_first_image_data
-
+import openai
 
 
 # Function to create a conversational retrieval chain to aid in the chat function.
@@ -34,37 +35,89 @@ def get_vectorstore(text_chunks, openai_api_key):
     return vectorstore
 
 
+
+def get_intent(user_question):
+
+    openai.api_key = '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'  # Replace with your actual OpenAI API key
+
+    # Constructing the prompt
+    prompt = f"Please determine the main intent of the following user query: '{user_question}'. The intent should be a single word or a short phrase."
+
+    try:
+        # Making a request to OpenAI
+        response = openai.Completion.create(
+          engine="davinci-002",  # Assuming GPT-4 is the latest; replace with the appropriate engine
+          prompt=prompt,
+          max_tokens=50  # Adjust as necessary
+        )
+
+        return response.choices[0].text.strip().lower()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
 # Function to handle the user input, get a response, and manage the chat history.
 
 def handle_userinput(user_question, pdf_docs):
+
+
+    if 'flight_flag' not in st.session_state:
+        st.session_state['flight_flag'] = False
+
+
+    if 'hotel_flag' not in st.session_state:
+        st.session_state['hotel_flag'] = False
+
+
     if user_question:
-        if 'flight' in user_question.lower():
-            flight_data, url = scrape_flights(user_question)
-            response = get_cheapest_flights_response(flight_data, url)
 
-            # Append the chatbot's response to the chat history.
-            # st.session_state.messages.append({"role": "assistant", "content": response, "image_data": get_first_image_data(pdf_docs)})
-            st.session_state.messages.append({"role": "assistant", "content": response})
+        intent = get_intent(user_question)
+        print(f"Identified Intent: {intent}")
 
-            # Display the chatbot's response.
-            with st.chat_message("assistant"):
-                st.write(response)
+        if 'flight' in intent or 'flight' in user_question:
 
-            # # Display the image using HTML
-            # first_image_data = get_first_image_data(pdf_docs)
-            # if first_image_data:
-            #     st.write(f'<img src="data:image/png;base64,{first_image_data}" alt="Image" width="200">')
+            if not st.session_state['flight_flag']:
+                with st.chat_message("assistant"):
+                    st.write("It looks like you want to check flight information. Please provide origin, destination and date.\
+                            \n Example: Can you give me the best flights from LAX to JFK? I am planning to travel from 2023-12-01 to 2023-12-03.")
+
+                st.session_state['flight_flag'] = True
+
+            else:  
+                flight_data, url = scrape_flights(user_question)
+
+                response = get_cheapest_flights_response(flight_data, url)
+
+                with st.chat_message("assistant"):
+                    st.write(response)
+
+                st.session_state.messages.append({"role": "assistant", "content": response})
+
+
         
-        elif 'hotel' in user_question.lower():
-            hotel_data, city, nights, url = scrape_hotels(user_question)
-            response = get_hotels_response(hotel_data, city, nights, url)
+        elif 'hotel' in intent or "hotel" in user_question:
 
-            # Append the chatbot's response to the chat history.
-            st.session_state.messages.append({"role": "assistant", "content": response})
+            if not st.session_state['hotel_flag']:
+                with st.chat_message("assistant"):
+                    st.write("It looks like you want to check hotel information. Please provide the city, check-in and check-out dates.\
+                            \n Example: Can you give me hotels to stay in New York? Check in is on 2023-12-01 and check out is 2023-12-07.")
 
-            # Display the chatbot's response.
-            with st.chat_message("assistant"):
-                st.write(response)
+                st.session_state['hotel_flag'] = True
+
+            else:    
+                hotel_data, city, nights, url = scrape_hotels(user_question)
+                response = get_hotels_response(hotel_data, city, nights, url)
+
+                # Append the chatbot's response to the chat history.
+                st.session_state.messages.append({"role": "assistant", "content": response})
+
+                # Display the chatbot's response.
+                with st.chat_message("assistant"):
+                    st.write(response)
+
+
+
+
         else:
             if not st.session_state.conversation or not callable(st.session_state.conversation):
                 st.session_state.show_warning = True
@@ -76,11 +129,19 @@ def handle_userinput(user_question, pdf_docs):
             response = st.session_state.conversation({'question': user_question})
 
             # Append the chatbot's response to the chat history.
-            st.session_state.messages.append({"role": "assistant", "content": response['answer']})
+            # st.session_state.messages.append({"role": "assistant", "content": response['answer']})
 
-            # Display the chatbot's response.
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            pdf_images = extract_images_from_pdf(st.session_state.uploaded_docs)
+
+
             with st.chat_message("assistant"):
                 st.write(response['answer'])
+                            # Display the chatbot's response.# THIS DISPLAYS IMAGE OF THE THE COVER OF THE PDF!!!!
+            if pdf_images:
+                for i in pdf_images:
+                    st.image(i, caption='Extracted Image', use_column_width = True)
+                    
 
     else:
         st.warning("Please provide a valid user question and submit a PDF before asking!")

@@ -135,7 +135,7 @@ def get_cheapest_flights_response(flight_data, url, num_flights=5):
 
 def extract_images_from_pdf(pdf_file):
     reader = PdfReader(pdf_file)
-    page = reader.pages[0]  # You might need to adjust the page index
+    page = reader.pages[16]  # You might need to adjust the page index
     count = 0
     images = []
 
@@ -143,6 +143,16 @@ def extract_images_from_pdf(pdf_file):
         images.append(image_file_object.data)
 
     return images
+
+import base64
+def get_first_image_data(pdf_docs):
+    if pdf_docs:
+        first_pdf = pdf_docs[0] if isinstance(pdf_docs, list) else pdf_docs
+        first_pdf_reader = PdfReader(first_pdf)
+        first_page_images = first_pdf_reader.pages[0].images
+        if first_page_images:
+            return first_page_images[0].data
+    return None
 
 # Function to extract text content from multiple PDFs.
 def get_pdf_text(pdf_docs):
@@ -168,9 +178,37 @@ def get_text_chunks(text):
 
 # Function to create a vector store based on the text chunks using OpenAIEmbeddings.
 def get_vectorstore(text_chunks, openai_api_key):
-    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
-    vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
+    embeddings = OpenAIEmbeddings(openai_api_key = openai_api_key)
+    vectorstore = FAISS.from_texts(texts = text_chunks, embedding = embeddings)
     return vectorstore
+
+# ## NEW STUFFF
+# # Function to extract text content and page numbers from multiple PDFs.
+# def get_pdf_text_and_page_numbers(pdf_docs):
+#     texts_with_page = []
+#     for pdf in pdf_docs:
+#         pdf_reader = PdfReader(pdf)
+#         for page_number, page in enumerate(pdf_reader.pages, start=1):
+#             text_chunk = page.extract_text()
+#             texts_with_page.append((page_number, text_chunk))
+#     return texts_with_page
+
+# # Function to split the extracted text into chunks.
+# def get_text_chunks(texts_with_page):
+#     text_splitter = CharacterTextSplitter(
+#         separator="\n",
+#         chunk_size=500,
+#         chunk_overlap=100,
+#         length_function=len
+#     )
+#     chunks = [(page_number, chunk) for page_number, text in texts_with_page for chunk in text_splitter.split_text(text)]
+#     return chunks
+
+# def get_vectorstore(text_chunks, openai_api_key):
+#     embeddings = OpenAIEmbeddings(openai_api_key = openai_api_key)
+#     vectorstore = FAISS.from_texts(texts = text_chunks, embedding = embeddings)
+#     return vectorstore
+# ## ENDDD
 
 # Function to create a conversational retrieval chain to aid in the chat function.
 def get_conversation_chain(vectorstore, openai_api_key):
@@ -194,45 +232,47 @@ def handle_userinput(user_question, pdf_docs):
             response = get_cheapest_flights_response(flight_data, url)
 
             # Append the chatbot's response to the chat history.
-            st.session_state.messages.append({"role": "assistant", "content": response, "image_data": get_first_image_data(pdf_docs)})
+            st.session_state.messages.append({"role": "assistant", "content": response})
 
             # Display the chatbot's response.
             with st.chat_message("assistant"):
                 st.write(response)
 
-            # Display the image using HTML
-            first_image_data = get_first_image_data(pdf_docs)
-            if first_image_data:
-                st.write(f'<img src="data:image/png;base64,{first_image_data}" alt="Image" width="200">')
+            # # Display the image using HTML
+            # first_image_data = get_first_image_data(pdf_docs)
+            # if first_image_data:
+            #     st.write(f'<img src="data:image/png;base64,{first_image_data}" alt="Image" width="200">')
         else:
             if not st.session_state.conversation or not callable(st.session_state.conversation):
                 st.session_state.show_warning = True
                 return
 
             st.session_state.show_warning = False
+             # Display the image using HTML
+            # first_image_data = get_first_image_data(pdf_docs)
+            # if first_image_data:
+            #     st.write(f'<img src="data:image/png;base64,{first_image_data}" alt="Image" width="200">')
 
             # Get the response from the conversation chain.
             response = st.session_state.conversation({'question': user_question})
 
             # Append the chatbot's response to the chat history.
-            st.session_state.messages.append({"role": "assistant", "content": response['answer']})
+            # st.session_state.messages.append({"role": "assistant", "content": response['answer']})
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            pdf_images = extract_images_from_pdf(st.session_state.uploaded_docs)
+
 
             # Display the chatbot's response.
             with st.chat_message("assistant"):
                 st.write(response['answer'])
+                # st.write(f'<img src="data:image/png;base64,{first_image_data}" alt="Image" width="200">')
 
+            # THIS DISPLAYS IMAGE OF THE THE COVER OF THE PDF!!!!
+            if pdf_images:
+                for i in pdf_images:
+                    st.image(i, caption='Extracted Image', use_column_width = True)
     else:
         st.warning("Please provide a valid user question and submit a PDF before asking!")
-
-import base64
-def get_first_image_data(pdf_docs):
-    if pdf_docs:
-        first_pdf = pdf_docs[0] if isinstance(pdf_docs, list) else pdf_docs
-        first_pdf_reader = PdfReader(first_pdf)
-        first_page_images = first_pdf_reader.pages[0].images
-        if first_page_images:
-            return first_page_images[0].data
-    return None
 
 
 
@@ -379,6 +419,7 @@ def main():
             else:
 
                 with st.spinner("Processing"):
+
                     # Extract text from the PDFs.
                     if isinstance(pdf_docs, list):
                         raw_text = get_pdf_text(pdf_docs)
@@ -389,7 +430,7 @@ def main():
                     text_chunks = get_text_chunks(raw_text)
 
                     #Open API Key
-                    api_key = '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'
+                    api_key = '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'
 
                     # Create a vector store based on the text chunks.
                     vectorstore = get_vectorstore(text_chunks, api_key)
@@ -400,10 +441,6 @@ def main():
 
                         # Extract images from the uploaded PDF
                     pdf_images = extract_images_from_pdf(st.session_state.uploaded_docs)
-
-                    # Display the first image (you might need to adjust this based on your use case)
-                    if pdf_images:
-                        st.image(pdf_images[0], caption='Extracted Image', use_column_width=True)
 
                     # handle_userinput(user_question, pdf_docs)
 
