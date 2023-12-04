@@ -19,8 +19,10 @@ def get_page_number(city, pdf_files):
     selected_pdf = None
     for pdf in pdf_files:
         page_num = 0
-        if len(pdf_files) == 1:
-            pdf = pdf_files[0]
+        try: 
+            len(pdf_files)
+        except:
+            pdf = pdf_files
         reader = PdfReader(pdf)
         for page in reader.pages:
             pages_text = page.extract_text()
@@ -30,7 +32,9 @@ def get_page_number(city, pdf_files):
                 most_mentioned_page = page_num
                 selected_pdf = pdf
             page_num+=1
-        if len(pdf_files) == 1:
+        if isinstance(pdf_files, list):
+            continue
+        else:
             break
     return most_mentioned_page, selected_pdf
 
