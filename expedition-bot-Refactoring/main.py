@@ -1,19 +1,14 @@
 # main.py
 import streamlit as st
-from pdf_processing import extract_images_from_pdf, get_pdf_text, get_text_chunks
+from pdf_processing import extract_images_from_pdf, get_page_number, get_pdf_text, get_text_chunks
 from chatbot import handle_userinput, get_conversation_chain, get_vectorstore
 from ui_components import clear_chat_history,image_in_chat
 from utils import get_first_image_data
 from responses import get_cheapest_flights_response, get_hotels_response
-
-
-
 from config import initialize_config
 import streamlit as st
 from htmlTemplates import css
 import numpy as np
-
-
 import spacy
 nlp = spacy.load('en_core_web_sm')
 
@@ -135,7 +130,7 @@ def main():
                         vectorstore, api_key)
 
                         # Extract images from the uploaded PDF
-                    pdf_images = extract_images_from_pdf(st.session_state.uploaded_docs)
+                    # pdf_images = extract_images_from_pdf(st.session_state.uploaded_docs)
 
                     # # Display the first image (you might need to adjust this based on your use case)
                     # if pdf_images:

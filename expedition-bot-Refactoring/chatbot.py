@@ -8,11 +8,12 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from scrapers import scrape_hotels, scrape_flights
 from responses import get_cheapest_flights_response, get_hotels_response
-from pdf_processing import extract_images_from_pdf
+from pdf_processing import extract_images_from_pdf, get_page_number
 import streamlit as st
 from utils import get_first_image_data
 import openai
-
+import spacy
+nlp = spacy.load('en_core_web_sm')
 
 # Function to create a conversational retrieval chain to aid in the chat function.
 def get_conversation_chain(vectorstore, openai_api_key):
@@ -129,10 +130,17 @@ def handle_userinput(user_question, pdf_docs):
             response = st.session_state.conversation({'question': user_question})
 
             # Append the chatbot's response to the chat history.
-            # st.session_state.messages.append({"role": "assistant", "content": response['answer']})
+            st.session_state.messages.append({"role": "assistant", "content": response['answer']})
+            # st.session_state.messages.append({"role": "assistant", "content": response})
 
-            st.session_state.messages.append({"role": "assistant", "content": response})
-            pdf_images = extract_images_from_pdf(st.session_state.uploaded_docs)
+            #Get city name from question
+            doc = nlp(user_question)
+            for entity in doc.ents:
+                if entity.label_ == 'GPE':
+                    city = entity.text
+
+            page_number, selected_pdf = get_page_number(city, st.session_state.uploaded_docs)
+            pdf_images = extract_images_from_pdf(selected_pdf,page_number)
 
 
             with st.chat_message("assistant"):
@@ -140,9 +148,8 @@ def handle_userinput(user_question, pdf_docs):
                             # Display the chatbot's response.# THIS DISPLAYS IMAGE OF THE THE COVER OF THE PDF!!!!
             if pdf_images:
                 for i in pdf_images:
-                    st.image(i, caption='Extracted Image', use_column_width = True)
+                    st.image(i, use_column_width = False)
                     
 
     else:
         st.warning("Please provide a valid user question and submit a PDF before asking!")
-
