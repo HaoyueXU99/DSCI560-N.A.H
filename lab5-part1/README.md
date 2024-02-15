@@ -66,10 +66,6 @@ python Lab5_Part1.py
 2. `Task1_PDF_preprocessed.csv`: Contains the preprocessed version of the extracted data.
 3. Data stored in the MySQL database in the table named `wells_data`.
 
-![截屏2023-10-07 22.23.51](/Users/haoyuexu/Library/Application Support/typora-user-images/截屏2023-10-07 22.23.51.png)
-
-
-
 
 
 ## Description of Functions
