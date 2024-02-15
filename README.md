@@ -55,7 +55,7 @@ This is a Python gui application that demonstrates how to build a custom PDF cha
 
 Please go to the lab6-part1 directory to see the full README file: [Lab6-part1 README](lab6-part1/README.pdf)
 
-## Lab-part2
+## Lab-part2: PDFs Masters - Chat with your PDFs!
 
 The application provides a chat interface, allowing users to ask questions about the content of their uploaded PDFs. With the help of various libraries, the app extracts text from PDFs, chunks the data, and utilizes embeddings and vector stores to support a conversational experience with the content.
 
