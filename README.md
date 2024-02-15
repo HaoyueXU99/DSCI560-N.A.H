@@ -60,3 +60,9 @@ Please go to the lab6-part1 directory to see the full README file: [Lab6-part1 R
 The application provides a chat interface, allowing users to ask questions about the content of their uploaded PDFs. With the help of various libraries, the app extracts text from PDFs, chunks the data, and utilizes embeddings and vector stores to support a conversational experience with the content.
 
 Please go to the lab6-part2 directory to see the full README file: [Lab6-part2 README](lab6-part2/readme.md)
+
+## Final Project: Expedition-bot
+
+The Expedition Bot is an advanced travel planner designed to provide personalized travel solutions. It integrates a variety of technologies and APIs, delivering a bespoke experience for users in planning their travels.
+
+Please go to the expedition-bot-final directory to see the full README file: [Final Project README](expedition-bot-final/README.pdf)
