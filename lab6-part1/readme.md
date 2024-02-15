@@ -8,7 +8,6 @@ This is a Python gui application that demonstrates how to build a custom PDF cha
 
 - Database Integration: MySQL is incorporated to store text chunks extracted from PDFs.
 
-![截屏2023-10-21 20.21.34](/Users/haoyuexu/Library/Application Support/typora-user-images/截屏2023-10-21 20.21.34.png)
 
 - User Authentication: The code signifies an intention to implement user authentication using `streamlit_login_auth_ui.widgets`. （Some errors were encountered while using this function ）
 
@@ -48,7 +47,6 @@ OPENAI_API_KEY= # Your OpenAI API key
 
 3.  Create a folder named `.streamlit`  in your root:
 
-![截屏2023-10-21 20.29.47](/Users/haoyuexu/Library/Application Support/typora-user-images/截屏2023-10-21 20.29.47.png)
 
 
 
