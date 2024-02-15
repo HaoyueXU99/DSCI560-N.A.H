@@ -44,7 +44,6 @@ The application provides a chat interface, allowing users to ask questions about
 
 - Chat Interface: My code uses native Streamlit chat UI functionalities while the reference code leans on custom HTML templates.
 
-  ![PNG图像](/Users/haoyuexu/Program/DSCI560-N.A.H/lab6-part2/PNG图像.png)
 
 - Open source models (form Hugging Face) are used:
   - For embeddings: “all-MiniLM-L6-v2” sentence transformer

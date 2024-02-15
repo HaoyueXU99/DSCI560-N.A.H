@@ -145,11 +145,7 @@ python3 store.py
 python3 api_server.py
 ```
 
-![截屏2023-10-17 21.43.15](/Users/haoyuexu/Library/Application Support/typora-user-images/截屏2023-10-17 21.43.15.png)
 
- ![截屏2023-10-17 21.42.11](/Users/haoyuexu/Library/Application Support/typora-user-images/截屏2023-10-17 21.42.11.png)
-
-![截屏2023-10-17 21.41.11](/Users/haoyuexu/Library/Application Support/typora-user-images/截屏2023-10-17 21.41.11.png)
 
 ### 7. Viewing Project:
 
@@ -159,5 +155,3 @@ http://localhost:5173/
 ```
 You should be able to see the result of your web application.
 Note: It depends on the terminal information.
-
-![截屏2023-10-17 21.45.26](/Users/haoyuexu/Library/Application Support/typora-user-images/截屏2023-10-17 21.45.26.png)
